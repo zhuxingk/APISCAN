@@ -1,5 +1,5 @@
 import unittest
-from API_tool.requests import RequestModule, select
+from API_tool.requestModule import RequestModule, select
 
 
 class RequestModuleTest(unittest.TestCase):

@@ -1,4 +1,4 @@
-import requests
+import requestModule
 
 
 def select(method):

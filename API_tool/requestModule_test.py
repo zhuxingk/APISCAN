@@ -1,5 +1,5 @@
 import unittest
-from requests import RequestModule
+from requestModule import RequestModule
 
 
 class TestRequestModule(unittest.TestCase):
