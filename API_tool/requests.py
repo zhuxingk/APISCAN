@@ -31,25 +31,46 @@ def select(method):
 
 class RequestModule:
     def __init__(self, url: str, method: str = 'GET', headers: dict = None, params: dict = None,
-                 data: dict = None, timeout: float = 30, **kwargs):
+                 data: dict = None, timeout: int = 30, **kwargs):
         """
-        初始化请求方法，url，请求头，请求参数，请求体
+        Initializes the request method, URL, headers, parameters, and request body.
 
-        :param url: 请求地址
-        :param method: 请求方法，支持 'GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH'
-        :param headers: 请求头
-        :param params: 请求参数
-        :param data: 请求体
-        :param timeout: 请求超时时间
-        :param kwargs: 额外的请求参数，如身份验证、SSL证书验证等
+        :param url: Request URL
+        :param method: Request method, defaults to 'GET'
+        :param headers: Request headers
+        :param params: Query parameters
+        :param data: Request body
+        :param timeout: Request timeout in seconds, defaults to 30
+        :param kwargs: Additional request parameters such as authentication, SSL certificate validation, etc.
         """
         self.url = url
-        self.method = method.upper()  # 统一将请求方法转为大写
+        self.method = method.upper()  # Convert request method to uppercase
         self.headers = headers or {}
         self.params = params or {}
         self.data = data or {}
         self.timeout = timeout
         self.kwargs = kwargs
+
+    # def __init__(self, url: str, method: str = 'GET', headers: dict = None, params: dict = None,
+    #              data: dict = None, timeout: float = 30, **kwargs):
+    #     """
+    #     初始化请求方法，url，请求头，请求参数，请求体
+    #
+    #     :param url: 请求地址
+    #     :param method: 请求方法，支持 'GET', 'POST', 'PUT', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH'
+    #     :param headers: 请求头
+    #     :param params: 请求参数
+    #     :param data: 请求体
+    #     :param timeout: 请求超时时间
+    #     :param kwargs: 额外的请求参数，如身份验证、SSL证书验证等
+    #     """
+    #     self.url = url
+    #     self.method = method.upper()  # 统一将请求方法转为大写
+    #     self.headers = headers or {}
+    #     self.params = params or {}
+    #     self.data = data or {}
+    #     self.timeout = timeout
+    #     self.kwargs = kwargs
 
     def send(self):
         """
