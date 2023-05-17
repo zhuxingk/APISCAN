@@ -1,6 +1,6 @@
 # 接口文档
 
-## 接口1
+## API1
 
 - URL: /api/v1/user
 - Method: GET
@@ -19,7 +19,7 @@
         "errmsg": "xxxx"
     }
 
-## 接口2
+## API2
 
 - URL: /api/v1/book
 - Method: POST

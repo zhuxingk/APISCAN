@@ -1,5 +1,7 @@
 import json
 import re
+
+import markdown2
 from bs4 import BeautifulSoup
 
 
@@ -7,123 +9,41 @@ class MarkdowntoSql:
     def __init__(self, md_file, sql_file):
         self.md_file = md_file
         self.sql_file = sql_file
-        self.sql_list = []
 
-    def parse_markdown(self):
-        with open(self.md_file, encoding='utf-8') as f:
-            md = f.read()
+    def convert_markdown_to_sql(self, sql_file):
+        # 从Markdown文档中读取输入数据
+        with open(md_file, 'r') as file:
+            input_data = file.read()
+            print(input_data)
 
-        # 解析markdown表格
-        soup = BeautifulSoup(md, 'html.parser')
-        tables = soup.find_all('table')
+        #将markdown文档中的数据转换为html格式
+        html = markdown2.markdown(input_data)
 
-        for table in tables:
-            headers = [header.get_text() for header in table.find_all('th')]
-            rows = table.find_all('tr')
-            for row in rows:
-                values = [value.get_text().strip() for value in row.find_all('td')]
-                if len(headers) == len(values):
-                    # 根据解析到的值生成sql语句
-                    self.sql_list.append(self.generate_sql(headers, values))
+        # 使用正则表达式提取接口信息
+        pattern = r'<h2>\s*API\d+\s*</h2>\s*<ul>\s*<li>URL:\s*(.*?)\s*</li>\s*<li>Method:\s*(.*?)\s*</li>\s*<li>Request:\s*<pre><code>(.*?)</code></pre>\s*</li>\s*<li>Response\(TRUE\):\s*<pre><code>(.*?)</code></pre>\s*</li>\s*<li>Response\(FALSE\):\s*<pre><code>(.*?)</code></pre>\s*</li>\s*</ul>'
+        matches = re.findall(pattern, html, re.DOTALL)
+        print(matches)  # 打印匹配结果
 
-        # 解析markdown标题和内容
-        sections = re.findall('^#{2}\s+(.*?)\n([\s\S]*?)(?=^#{2}\s+|\Z)', md)
+        # 处理每个接口
+        for match in matches:
+            url = match[0].strip()
+            method = match[1].strip()
+            request = match[2].strip()
+            response_true = match[3].strip()
+            response_false = match[4].strip()
 
-        for title, content in sections:
-            url = ''
-            method = ''
-            request = ''
-            response_true = ''
-            response_false = ''
+            # 构建插入语句
+            insert_statement = f"INSERT INTO `api` (`name`, `url`, `method`, `request`, `response(true)`, `response(false)`) \
+        VALUES ('{url}', '{method}', '{request}', '{response_true}', '{response_false}');"
+            print(insert_statement)
+            # 将生成的语句写入到sql.file文件中
+            with open(sql_file, 'a') as file:
+                file.write(insert_statement + '\n')
 
-            # 解析每个section的内容
-            lines = content.split('\n')
-            for line in lines:
-                if line.startswith('- URL:'):
-                    url = line.replace('- URL:', '').strip()
-                elif line.startswith('- Method:'):
-                    method = line.replace('- Method:', '').strip()
-                elif line.startswith('- Request:'):
-                    request_lines = []
-                    index = lines.index(line) + 1
-                    while index < len(lines) and not lines[index].startswith('- Response'):
-                        request_lines.append(lines[index])
-                        index += 1
-                    request = self.parse_json(request_lines, 'Request')
-                elif line.startswith('- Response(TRUE):'):
-                    response_true_lines = []
-                    index = lines.index(line) + 1
-                    while index < len(lines) and not lines[index].startswith('- Response'):
-                        response_true_lines.append(lines[index])
-                        index += 1
-                    response_true = self.parse_json(response_true_lines, 'Response(TRUE)')
-                elif line.startswith('- Response(FALSE):'):
-                    response_false_lines = []
-                    index = lines.index(line) + 1
-                    while index < len(lines) and not lines[index].startswith('- Response'):
-                        response_false_lines.append(lines[index])
-                        index += 1
-                    response_false = self.parse_json(response_false_lines, 'Response(FALSE)')
 
-            # 根据解析到的值生成sql语句
-            self.sql_list.append(self.generate_sql(title, url, method, request, response_true, response_false))
-
-        print(self.sql_list)
-
-    def generate_sql(self, *args):
-        sql = "INSERT INTO `api` ("
-        for arg in args:
-            if type(arg) == str:
-                sql += "`title`, "
-            elif type(arg) == list:
-                for item in arg:
-                    sql += f"`{item}`, "
-            else:
-                sql += "`url`, `method`, `request`, `response_true`, `response_false`, "
-                break
-        sql = sql[:-2] + ") VALUES ("
-        for arg in args:
-            if type(arg) == str:
-                sql += f"'{arg}', "
-            elif type(arg) == list:
-                sql += f"'{','.join(arg)}', "
-            else:
-                sql += f"'{arg}', "
-        sql = sql[:-2] + ");\n"
-        return sql
-
-    def parse_json(self, lines, key):
-        """
-        解析JSON字符串
-        """
-        json_str = ''
-        start = False
-        for line in lines:
-            if line.startswith(f'- {key}:'):
-                start = True
-            elif start and line.startswith('-'):
-                break
-            elif start:
-                json_str += line.strip() + '\n'
-
-        # 处理json字符串
-        try:
-            json_obj = json.loads(json_str)
-            return json.dumps(json_obj, ensure_ascii=False)
-        except:
-            return ''
-
-    def decode_sql(self):
-        self.parse_markdown()
-
-        if not self.sql_list:
-            raise Exception('No SQL generated from the markdown file')
-
-        with open(self.sql_file, 'w', encoding='utf-8') as f:
-
-            for sql in self.sql_list:
-                f.write(sql)
 if __name__ == '__main__':
     md_file = './test.md'
     sql_file = './test.sql'
-    MarkdowntoSql(md_file, sql_file).decode_sql()
+
+    mts = MarkdowntoSql(md_file, sql_file)
+    mts.convert_markdown_to_sql(sql_file)
