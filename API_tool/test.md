@@ -1,6 +1,6 @@
 # 接口文档
 
-## API1
+## name :API1
 
 - URL: /api/v1/user
 - Method: GET
@@ -19,10 +19,28 @@
         "errmsg": "xxxx"
     }
 
-## API2
+## name : API2
 
 - URL: /api/v1/book
 - Method: POST
+- Request:
+    {
+        "book_name": "Harry Potter",
+        "author": "J.K. Rowling",
+        "price": 30.0
+    }
+- Response(TRUE):
+    {
+        "errorcode": 0
+    }
+- Response(FALSE):
+    {
+        "errorcode": 500,
+        "errmsg": "Server error"
+    }
+## name : API3
+- URL: /api/v1/book
+- Method: delete
 - Request:
     {
         "book_name": "Harry Potter",
