@@ -1,54 +1,18 @@
 import requests
 from pymongo import MongoClient
 
-# 连接 MongoDB
-client = MongoClient('mongodb://localhost:27017')
 
-# 选择数据库
-db = client['APIInfo']
+class APISender:
+    # 初始化APISender实例
+    def __init__(self, mongodb_uri, database_name):
+        self.client = MongoClient(mongodb_uri)
+        self.db = self.client[database_name]
+        self.collection = self.db['APICollection']
+        self.response_collection = self.db['APIResponse']
+        self.error_collection = self.db['ReqErr']
 
-# 选择集合
-collection = db['APICollection']
-
-
-def execute_api(url, method, request):
-    # 定义支持的方法和对应的请求函数
-    methods = {
-        'GET': requests.get,
-        'POST': requests.post,
-        'PUT': requests.put,
-        'DELETE': requests.delete
-    }
-
-    # 检查方法是否支持
-    if method not in methods:
-        return {'error': f'Unsupported method: {method}'}
-
-    try:
-        # 执行请求函数
-        response = methods[method](url, json=request)
-
-        return {'status_code': response.status_code, 'response': response.json()}
-    except Exception as e:
-        return {'error': str(e)}
-
-
-def execute_all_apis():
-    import requests
-    from pymongo import MongoClient
-
-    # 连接 MongoDB
-    client = MongoClient('mongodb://localhost:27017')
-
-    # 选择数据库
-    db = client['APIInfo']
-
-    # 选择集合
-    collection = db['APICollection']
-    response_collection = db['APIResponse']
-
-    def execute_api(url, method, request):
-        # 定义支持的方法和对应的请求函数
+    # 执行单个接口
+    def execute_api(self, url, method, request):
         methods = {
             'GET': requests.get,
             'POST': requests.post,
@@ -56,23 +20,20 @@ def execute_all_apis():
             'DELETE': requests.delete
         }
 
-        # 检查方法是否支持
         if method not in methods:
             return {'error': f'Unsupported method: {method}'}
 
         try:
-            # 执行请求函数
             response = methods[method](url, json=request)
-
             return {'status_code': response.status_code, 'response': response.json()}
         except Exception as e:
             return {'error': str(e)}
 
-    def execute_all_apis():
+    # 执行所有接口
+    def execute_all_apis(self):
         error_report = []
 
-        # 获取所有接口文档
-        docs = collection.find()
+        docs = self.collection.find()
 
         for doc in docs:
             name = doc['name']
@@ -80,32 +41,38 @@ def execute_all_apis():
             method = doc['Method']
             request = doc['Request']
 
-            result = execute_api(url, method, request)
-
+            result = self.execute_api(url, method, request)
+            # 将结果插入数据库
             if 'error' in result:
                 error_report.append({'name': name, 'url': url, 'error': result['error']})
             else:
                 status_code = result['status_code']
                 response = result['response']
 
-                # 存储响应到APIResponse集合
-                response_collection.insert_one({
+                self.response_collection.insert_one({
                     'name': name,
                     'url': url,
+                    'method': method,
+                    'request': request,
+                    'status_code': status_code,
                     'response': response
                 })
-
-                # 处理接口响应数据，根据需求进行操作
-
-        if len(error_report) > 0:
+        # 打印错误报告
+        if error_report:
             print('Error Report:')
             for error in error_report:
                 print(f"Name: {error['name']}, URL: {error['url']}, Error: {error['error']}")
+                self.error_collection.insert_one({
+                    'name': error['name'],
+                    'url': error['url'],
+                    'error': error['error']
+                })
         else:
             print('All APIs executed successfully')
 
-    # 执行所有接口
-    execute_all_apis()
 
+# 创建APISender实例
+sender = APISender('mongodb://localhost:27017', 'APIInfo')
 
-
+# 执行所有接口
+sender.execute_all_apis()
