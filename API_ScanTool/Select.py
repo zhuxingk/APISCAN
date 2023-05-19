@@ -4,8 +4,8 @@ from pymongo import MongoClient
 
 
 class Choice:
-    def __init__(self, mongodb_uri, database_name):
-        self.client = MongoClient(mongodb_uri)
+    def __init__(self, mongodb_url, database_name):
+        self.client = MongoClient(mongodb_url)
         self.db = self.client[database_name]
         self.collection = self.db['APICollection']
 

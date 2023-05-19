@@ -1,15 +1,14 @@
 import requests
-from pymongo import MongoClient
+from pymongo import MongoClient, response
 
 
 class APISender:
     # 初始化APISender实例
-    def __init__(self, mongodb_uri, database_name):
+    def __init__(self, mongodb_uri, database_name, collection_name=None, response_name=None):
         self.client = MongoClient(mongodb_uri)
         self.db = self.client[database_name]
-        self.collection = self.db['APICollection']
-        self.response_collection = self.db['APIResponse']
-        self.error_collection = self.db['ReqErr']
+        self.db_collection = self.db[collection_name]
+        self.db_response = self.db[response_name]
 
     # 执行单个接口
     def execute_api(self, url, method, request):
@@ -74,8 +73,7 @@ class APISender:
             print('All APIs executed successfully')
 
 
-# 创建APISender实例
-sender = APISender('mongodb://localhost:27017', 'APIInfo')
-
-# 执行所有接口
-sender.execute_all_apis()
+#使用示例
+# if __name__ == '__main__':
+#     apisender = APISender('mongodb://localhost:27017', 'APIInfo', 'APICollection', 'APIResponse')
+#     apisender.execute_all_apis()
