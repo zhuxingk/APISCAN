@@ -57,6 +57,7 @@ class APIStorage:
 
         for section in config.sections():
             if re.match('API', section):
+                # 读取接口信息，初始化为字典
                 interface_data = {}
 
                 for field in field_mapping:
@@ -64,6 +65,7 @@ class APIStorage:
 
                 # Convert JSON strings to Python dictionaries
                 for key in ['Request', 'Response(TRUE)', 'Response(FALSE)', 'Extensions']:
+                    # 如果接口信息中包含该字段，则将其转换为字典
                     if key in interface_data:
                         interface_data[key] = json.loads(interface_data[key])
 
@@ -91,17 +93,3 @@ if __name__ == '__main__':
     api_storage.create_indexes()
 
 
-
-# example_interface_data_list = read_interface_data_from_config('example_interface_config.ini')
-# print(example_interface_data_list)  # 查看读取的接口信息列表
-# # 批量插入接口信息
-# bulk_insert_interfaces(example_interface_data_list)
-#
-# # 创建索引
-# create_indexes()
-#
-# # 读取更新配置文件中的接口信息
-# updated_interface_data_list = read_interface_data_from_config('updated_interface_config.ini')
-#
-# # 批量更新接口信息
-# bulk_update_interfaces(updated_interface_data_list)

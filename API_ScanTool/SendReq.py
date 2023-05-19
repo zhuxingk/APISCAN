@@ -26,14 +26,16 @@ class APISender:
         try:
             response = methods[method](url, json=request)
             return {'status_code': response.status_code, 'response': response.json()}
-        except Exception as e:
-            return {'error': str(e)}
+        except requests.exceptions.ConnectionError as e:
+            return {'error': f'Connection error: {e}'}
+        except ValueError as e:
+            return {'error': f'Value error: {e}'}
 
     # 执行所有接口
     def execute_all_apis(self):
         error_report = []
 
-        docs = self.collection.find()
+        docs = self.collection.find()  # 使用find方法获取所有文档
 
         for doc in docs:
             name = doc['name']
@@ -42,13 +44,14 @@ class APISender:
             request = doc['Request']
 
             result = self.execute_api(url, method, request)
-            # 将结果插入数据库
+
             if 'error' in result:
                 error_report.append({'name': name, 'url': url, 'error': result['error']})
             else:
                 status_code = result['status_code']
                 response = result['response']
 
+                # 将结果插入数据库之前提取status_code和response
                 self.response_collection.insert_one({
                     'name': name,
                     'url': url,
@@ -57,7 +60,7 @@ class APISender:
                     'status_code': status_code,
                     'response': response
                 })
-        # 打印错误报告
+
         if error_report:
             print('Error Report:')
             for error in error_report:
