@@ -47,7 +47,7 @@ class Select:
         try:
             response = methods[method](url, json=request)
             return {'status_code': response.status_code, 'response': response.json()}
-        except Exception as e:
+        except requests.exceptions.ConnectionError as e:
             return {'error': str(e)}
 
 
